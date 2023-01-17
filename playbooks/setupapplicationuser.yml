@@ -1,0 +1,38 @@
+---
+- name: Deploy User and Group Kafka configuration
+  hosts: centos
+  become: yes
+  vars:
+    app_user: kafka
+
+  tasks:
+  - name: Ensure group "{{ app_user }}" exists
+    ansible.builtin.group:
+      name: "{{ app_user }}"
+      state: present
+
+  - name: Add the user "{{ app_user }}" with a specific uid and a primary group of "{{ app_user }}"
+    ansible.builtin.user:
+      name: "{{ app_user }}"
+      comment: "{{ app_user }} user for podman containers"
+      group: "{{ app_user }}"
+      expires: -1
+
+  - name: Check if "{{ app_user }}" is lingering
+    stat:
+      path: "/var/lib/systemd/linger/{{ app_user }}"
+    register: user_lingering
+
+  - name: Enable lingering is needed
+    command: "loginctl enable-linger {{ app_user }}"
+    when: not user_lingering.stat.exists
+
+  - name : Set user.max_user_namespaces
+    ansible.posix.sysctl:
+      name: user.max_user_namespaces
+      value: '15000'
+      state: present
+
+      
+
+

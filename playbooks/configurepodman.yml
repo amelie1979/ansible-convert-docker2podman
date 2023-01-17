@@ -1,0 +1,63 @@
+---
+- name: "Configure Podman & restaure data"
+  hosts: centos
+  become: yes
+  vars:
+    docker_certs_workdir: '/etc/docker/certs.d'
+    docker_registry_auth_file: '/root/.docker/config.json'
+    docker_registry_configd_file: '/etc/docker/daemon.json'
+    docker_storage_config_file: '/etc/containers/storage.conf'
+    container_directory: '/etc/containers'
+    container_default_userdir: '/home/kafka/.containers'
+    container_user_bashrc: '/home/kafka/.bashrc'
+    backup_docker_location_workdir: '/tmp/backup/docker'
+    backup_container_location_workdir: '/tmp/backup'
+
+  tasks:
+
+    - name: Create Podman Default User Directory (if use with a specific user account)
+      ansible.builtin.file:
+        path: "{{ container_default_userdir }}"
+        state: directory
+        mode: 0775
+
+    - name: Configure podman registry auth
+      ansible.builtin.copy:
+        src: "{{ backup_docker_location_workdir }}/config.json" 
+        dest: "{{ container_default_userdir }}/auth.json" 
+        remote_src: true
+
+    - name: Remove docker registry auth
+      ansible.builtin.file:
+        path: "{{ docker_registry_auth_file }}" 
+        state: absent
+
+    - name: add auth files variable to the user running kafka
+      ansible.builtin.lineinfile:
+        path: "{{ container_user_bashrc }}"
+        line: export REGISTRY_AUTH_FILE="{{ container_default_userdir }}/auth.json"
+        create: yes
+
+    - name: Install SSL Certificate into podman certs.d directory
+      ansible.builtin.copy:
+        src: "{{ backup_docker_location_workdir }}/certs.d"
+        dest: "{{ container_directory }}"
+        remote_src: true
+
+    - name: Restaure the registries.conf file
+      ansible.builtin.copy:
+        src: "{{ backup_container_location_workdir }}/containers/registries.conf"
+        dest: "{{ container_directory }}/registries.conf"
+        remote_src: true
+
+    - name: Copy from the git source local file storage.conf
+      ansible.builtin.copy:
+        src: ../files/storage.conf
+        dest: "{{ container_directory }}/storage.conf"
+        remote_src: false    
+
+    - name: Copy from the git source local file storage.conf into the kafka Userdir
+      ansible.builtin.copy:
+        src: ../files/storage.conf
+        dest: "{{ container_default_userdir }}/storage.conf"
+        remote_src: false 

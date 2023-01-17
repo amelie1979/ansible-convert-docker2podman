@@ -1,0 +1,52 @@
+---
+- name: "Gather docker and containers config & backup data"
+  hosts: centos
+  become: yes
+  vars:
+    docker_certs_workdir: '/etc/docker/certs.d'
+    docker_registry_auth_file: '/root/.docker/config.json'
+    docker_registry_configd_file: '/etc/docker/daemon.json'
+    docker_storage_config_file: '/etc/containers/storage.conf'
+    container_directory: '/etc/containers'
+    backup_docker_location_workdir: '/tmp/backup/docker'
+    backup_container_location_workdir: '/tmp/backup'
+
+  tasks:
+    - name: Create Docker Backup Directory 
+      ansible.builtin.file:
+        path: "{{ backup_docker_location_workdir }}"
+        state: directory
+        mode: 0775
+
+    - name: Create Container Backup Directory 
+      ansible.builtin.file:
+        path: "{{ backup_container_location_workdir }}"
+        state: directory
+        mode: 0775
+
+    - name: Backup SSL Certificate 
+      ansible.builtin.copy:
+        src: "{{ docker_certs_workdir }}"
+        dest: "{{ backup_docker_location_workdir }}"
+        remote_src: true
+
+    - name: Backup docker registry auth
+      ansible.builtin.copy:
+        src: "{{ docker_registry_auth_file }}"
+        dest: "{{ backup_docker_location_workdir }}"
+        remote_src: true
+
+    - name: Backup docker registry config
+      ansible.builtin.copy:
+        src: "{{ docker_registry_configd_file }}"
+        dest: "{{ backup_docker_location_workdir }}"
+        remote_src: true
+
+    - name: Backup Containers directory
+      ansible.builtin.copy:
+        src: "{{ container_directory }}"
+        dest: "{{ backup_container_location_workdir }}"
+        remote_src: true  
+
+
+
