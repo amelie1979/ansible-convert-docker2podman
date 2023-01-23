@@ -17,6 +17,8 @@
       policy: targeted
       state: permissive
 
+# - name: Stop Container if running
+
   - name: List  Existing Volume 
     ansible.builtin.shell:
       cmd: docker volume ls --format '{{' {{print .Name}} '}}'
