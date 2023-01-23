@@ -1,5 +1,5 @@
 #!/bin/bash
-# Docker Volume File Backup and Restore Tool
+# podman Volume File Backup and Restore Tool
 # Easily tar up a volume on a local (or remote) engine
 # Inspired by CLIP from Lukasz Lach
 
@@ -18,7 +18,7 @@ trap 'handle_error $LINENO' ERR
 usage() {
 cat <<EOF
 
-"Docker Volume Backup". Replicates image management commands for volumes.
+"podman Volume Backup". Replicates image management commands for volumes.
 
 export/import copies files between a host tarball and a volume. For making
   volume backups and restores.
@@ -58,7 +58,7 @@ cmd_export() {
         exit 1
     fi
     
-    if ! docker volume inspect --format '{{.Name}}' "$VOLUME_NAME";
+    if ! podman volume inspect --format '{{.Name}}' "$VOLUME_NAME";
     then
         echo "Error: Volume $VOLUME_NAME does not exist"
         exit 1
@@ -69,7 +69,7 @@ cmd_export() {
 # TODO: if FILE_NAME starts with / we need to error out
 # unless we can translate full file paths
 
-    if ! docker run --rm \
+    if ! podman run --rm \
       -v "$VOLUME_NAME":/vackup-volume \
       -v "$(pwd)":/vackup \
       busybox \
@@ -92,10 +92,10 @@ cmd_import() {
         exit 1
     fi
     
-    if ! docker volume inspect --format '{{.Name}}' "$VOLUME_NAME";
+    if ! podman volume inspect --format '{{.Name}}' "$VOLUME_NAME";
     then
         echo "Error: Volume $VOLUME_NAME does not exist"
-        docker volume create "$VOLUME_NAME"
+        podman volume create "$VOLUME_NAME"
     fi
 
 # TODO: check if file exists on host, if it does
@@ -103,7 +103,7 @@ cmd_import() {
 # TODO: if FILE_NAME starts with / we need to error out
 # unless we can translate full file paths    
 
-    if ! docker run --rm \
+    if ! podman run --rm \
       -v "$VOLUME_NAME":/vackup-volume \
       -v "$(pwd)":/vackup \
       busybox \
@@ -126,13 +126,13 @@ cmd_save() {
         exit 1
     fi
 
-    if ! docker volume inspect --format '{{.Name}}' "$VOLUME_NAME"; 
+    if ! podman volume inspect --format '{{.Name}}' "$VOLUME_NAME"; 
     then
         echo "Error: Volume $VOLUME_NAME does not exist"
         exit 1
     fi
 
-    if ! docker run \
+    if ! podman run \
       -v "$VOLUME_NAME":/mount-volume \
       busybox \
       cp -Rp /mount-volume/. /volume-data/;
@@ -141,11 +141,11 @@ cmd_save() {
         exit 1
     fi
 
-    CONTAINER_ID=$(docker ps -lq)
+    CONTAINER_ID=$(podman ps -lq)
 
-    docker commit -m "saving volume $VOLUME_NAME to /volume-data" "$CONTAINER_ID" "$IMAGE_NAME"
+    podman commit -m "saving volume $VOLUME_NAME to /volume-data" "$CONTAINER_ID" "$IMAGE_NAME"
 
-    docker container rm "$CONTAINER_ID"
+    podman container rm "$CONTAINER_ID"
   
     echo "Successfully copied volume $VOLUME_NAME into image $IMAGE_NAME, under /volume-data"
 }
@@ -160,13 +160,13 @@ cmd_load() {
         exit 1
     fi
 
-    if ! docker volume inspect --format '{{.Name}}' "$VOLUME_NAME"; 
+    if ! podman volume inspect --format '{{.Name}}' "$VOLUME_NAME"; 
     then
       echo "Volume $VOLUME_NAME does not exist, creating..."
-      docker volume create "$VOLUME_NAME"
+      podman volume create "$VOLUME_NAME"
     fi
     
-    if ! docker run --rm \
+    if ! podman run --rm \
       -v "$VOLUME_NAME":/mount-volume \
       "$IMAGE_NAME" \
       cp -Rp /volume-data/. /mount-volume/; 

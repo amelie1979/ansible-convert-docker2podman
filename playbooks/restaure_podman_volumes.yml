@@ -1,7 +1,7 @@
 ---
 - name: "Restaure existing volume volume.tar"
   hosts: centos
-  become: yes
+  become: true
   become_user: kafka
 
   tasks:
@@ -14,3 +14,17 @@
 
   # - name: Restaure Existing Volume in podman rootless (kafka User)
 
+  - name: List  Existing Volume 
+    become: true
+    become_user: root
+    ansible.builtin.shell:
+      cmd: docker volume ls --format '{{' {{print .Name}} '}}'
+    register: results
+
+  - debug: var=results.stdout_lines
+
+  - name: Import Existing Volume 
+    ansible.builtin.shell:
+      cmd: /tmp/v_podman_restaure.sh import "{{ item }}".tar "{{ item }}"
+      chdir: /tmp
+    loop: "{{ results.stdout_lines }}"
