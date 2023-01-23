@@ -1,0 +1,16 @@
+---
+- name: "Restaure existing volume volume.tar"
+  hosts: centos
+  become: yes
+  become_user: kafka
+
+  tasks:
+
+  - name: Copy volume podman restaure script
+    ansible.builtin.copy:
+      src: ../files/v_podman_restaure.sh
+      dest: /tmp/ 
+      mode: 0755
+
+  # - name: Restaure Existing Volume in podman rootless (kafka User)
+

@@ -3,13 +3,15 @@
   hosts: centos
   become: yes
   vars:
-    package_name: 'podman'
+    package_name: 
+      - name: podman
+#      - name: containers-tools
+#      - name: podman-docker
 
   tasks:
-
     - name: Install podman package 
       ansible.builtin.yum:
-        name: "{{ package_name }}"
+        name: "{{ item.name }}"
         enablerepo: extras
         state: present
-    
+      loop: "{{ package_name }}"

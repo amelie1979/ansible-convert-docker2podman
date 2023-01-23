@@ -1,0 +1,24 @@
+---
+- name: "Fix when systemctl --user give uanble to connect to dbus"
+  hosts: centos
+  become: yes
+  vars:
+    fix_file_name: 'fix_systectl_as_usr.service'
+
+  tasks:
+    - name: Copy system user fix for user (uid 1001 = kafka)
+      ansible.builtin.copy:
+        src: "../files/{{ fix_file_name }}"
+        dest: /etc/systemd/system/user@1001.service
+        mode: 0755
+
+    - name: Just force systemd to re-execute itself (2.8 and above)
+      ansible.builtin.systemd:
+        daemon_reexec: yes      
+
+    - name: Enable service user@1001.service
+      ansible.builtin.systemd:
+        name: user@1001.service
+        enabled: yes
+        state: started
+

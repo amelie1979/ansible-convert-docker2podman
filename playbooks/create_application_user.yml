@@ -1,5 +1,5 @@
 ---
-- name: Deploy User and Group Kafka configuration
+- name: Create Application User and Group for Kafka
   hosts: centos
   become: yes
   vars:
@@ -33,6 +33,9 @@
       value: '15000'
       state: present
 
+
+#  - name : In rootless mode if SeLinux in enable with need to set context
+#semanage fcontext -a -e $HOME/.local/share/containers NEWSTORAGEPATH restorecon -R -v NEWSTORAGEPATH
       
 
 

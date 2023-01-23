@@ -1,5 +1,5 @@
 ---
-- name: "Gather docker and containers config & backup data"
+- name: "Gather docker and containers config"
   hosts: centos
   become: yes
   vars:

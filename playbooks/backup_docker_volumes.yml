@@ -1,0 +1,40 @@
+---
+- name: "Backup existing volume volume.tar"
+  hosts: centos
+  become: yes
+  become_user: root
+
+  tasks:
+
+  - name: Copy volume docker backup script
+    ansible.builtin.copy:
+      src: ../files/v_docker_back.sh
+      dest: /tmp/ 
+      mode: 0755
+
+  - name: Put SELinux in permissive mode, if not backup will failed with permission denied.
+    ansible.posix.selinux:
+      policy: targeted
+      state: permissive
+
+  - name: List  Existing Volume 
+    ansible.builtin.shell:
+      cmd: docker volume ls --format '{{' {{print .Name}} '}}'
+    register: results
+
+  - debug: var=results.stdout_lines
+
+  - name: Backup Existing Volume 
+    ansible.builtin.shell:
+      cmd: /tmp/v_docker_back.sh export "{{ item }}" "{{ item }}".tar
+      chdir: /tmp
+    loop: "{{ results.stdout_lines }}"
+
+  - name: Change Ownership of tar files 
+    ansible.builtin.file:
+      path: /tmp/{{ item }}.tar
+      owner: kafka
+      group: kafka
+      mode: '0644'
+    loop: "{{ results.stdout_lines }}"        
+ 

@@ -8,7 +8,7 @@
     docker_registry_configd_file: '/etc/docker/daemon.json'
     docker_storage_config_file: '/etc/containers/storage.conf'
     container_directory: '/etc/containers'
-    container_default_userdir: '/home/kafka/.containers'
+    container_default_userdir: '/home/kafka/.config/containers'
     container_user_bashrc: '/home/kafka/.bashrc'
     backup_docker_location_workdir: '/tmp/backup/docker'
     backup_container_location_workdir: '/tmp/backup'
@@ -20,12 +20,32 @@
         path: "{{ container_default_userdir }}"
         state: directory
         mode: 0775
+        owner: kafka
+        group: kafka
+        recurse: true        
 
-    - name: Configure podman registry auth
+    - name: Create Podman Systemd User Directory (if use with a specific user account)
+      ansible.builtin.file:
+        path: /home/kafka/.config/systemd/user
+        state: directory
+        mode: 0775
+        owner: kafka
+        group: kafka
+        recurse: true
+
+#    - name: Configure podman registry auth from backup
+#      ansible.builtin.copy:
+#        src: "{{ backup_docker_location_workdir }}/config.json" 
+#        dest: "{{ container_default_userdir }}/auth.json" 
+#        remote_src: true
+
+    - name: Configure podman registry auth from git source
       ansible.builtin.copy:
-        src: "{{ backup_docker_location_workdir }}/config.json" 
+        src: ../files/config.json
         dest: "{{ container_default_userdir }}/auth.json" 
-        remote_src: true
+        remote_src: false
+        backup: yes
+
 
     - name: Remove docker registry auth
       ansible.builtin.file:
